@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require_relative "../../lib/event"
+require "ruby/openai"
 include Event
 
 class ItemsController < ApplicationController
@@ -59,6 +60,17 @@ class ItemsController < ApplicationController
       render :show
     else
       render json: { errors: @item.errors }, status: :unprocessable_entity
+    end
+
+    if @item.image.blank?
+      openAIClient = OpenAI::Client.new
+      response = openAIClient.images.generate(
+        parameters: {
+          prompt: @item.title,
+          size: "256x256"
+        }
+      )
+      @item.image = response.dig("data", 0, "url")
     end
   end
 
